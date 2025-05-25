@@ -4,7 +4,9 @@ const express = require("express");
 const axios = require("axios");
 const app = express();
 app.use(cors({
-  origin: "https://www.likepunk.com"
+  origin: ["https://www.likepunk.com", "https://likepunk.com"],
+  methods: ["GET", "POST"],
+  credentials: true
 }));
 const PORT = process.env.PORT || 3000;
 
