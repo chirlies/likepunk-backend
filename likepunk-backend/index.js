@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const app = express();
@@ -44,14 +45,22 @@ app.post("/webhook", (req, res) => {
 // Получить список продуктов с Peakerr
 app.get("/products", async (req, res) => {
   try {
-    const response = await axios.post("https://peakerr.com/api/v2", {
-      key: process.env.PEAKERR_API_KEY,
-      action: "services"
-    });
+    const response = await axios.post(
+      "https://peakerr.com/api/v2",
+      new URLSearchParams({
+        key: process.env.PEAKERR_API_KEY,
+        action: "services"
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
+      }
+    );
 
     res.json(response.data);
   } catch (error) {
-    console.error("Ошибка при получении продуктов:", error.message);
+    console.error("Ошибка при получении продуктов:", error.response?.data || error.message || error);
     res.status(500).json({ error: "Ошибка при получении продуктов" });
   }
 });
