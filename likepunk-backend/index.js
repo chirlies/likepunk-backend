@@ -1,7 +1,11 @@
+const cors = require("cors");
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const app = express();
+app.use(cors({
+  origin: "https://www.likepunk.com"
+}));
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
