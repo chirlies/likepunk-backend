@@ -43,9 +43,40 @@ app.post("/create-payment", async (req, res) => {
     res.status(500).json({ error: error.response?.data || error.message });
   }
 });
-app.post("/webhook", (req, res) => {
-  console.log("Webhook received:", req.body);
-  // Здесь позже подключим отправку заказа на JAP API
+app.post("/webhook", async (req, res) => {
+  const data = req.body;
+  console.log("Webhook received:", data);
+
+  // Проверка успешного платежа
+  if (data.payment_status === "finished") {
+    const { order_id } = data;
+
+    // Пример парсинга order_id — адаптируй под свою систему
+    const [, timestamp, service, link, quantity] = order_id.split("|");
+
+    try {
+      const response = await axios.post(
+        "https://peakerr.com/api/v2",
+        new URLSearchParams({
+          key: process.env.PEAKERR_API_KEY,
+          action: "add",
+          service: service,
+          link: link,
+          quantity: quantity
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        }
+      );
+
+      console.log("Peakerr response:", response.data);
+    } catch (error) {
+      console.error("Ошибка при отправке заказа на Peakerr:", error.response?.data || error.message);
+    }
+  }
+
   res.status(200).send("OK");
 });
 // Получить список продуктов с Peakerr
