@@ -57,7 +57,6 @@ app.post("/webhook", async (req, res) => {
     console.warn("⚠️ Неверная подпись IPN");
     return res.status(401).send("Invalid signature");
   }
-
   const data = req.body;
   console.log("✅ Вебхук получен и верифицирован:", data);
 
@@ -65,10 +64,9 @@ app.post("/webhook", async (req, res) => {
     const { order_id } = data;
     const parts = order_id.split("|");
 
-   if (parts.length === 5) {
-  const [, timestamp, service, link, quantity] = parts;
-
-  try {
+    if (parts.length === 5) {
+    const [, timestamp, service, link, quantity] = parts;
+    try {
     const response = await axios.post(
       "https://peakerr.com/api/v2",
       new URLSearchParams({
@@ -92,6 +90,8 @@ app.post("/webhook", async (req, res) => {
 } else {
   console.warn("⚠️ Некорректный формат order_id:", order_id);
 }
+
+  }
   res.status(200).send("OK");
 });
 // Получить список продуктов с Peakerr
