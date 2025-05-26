@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const cors = require("cors");
 require("dotenv").config();
 const express = require("express");
@@ -44,36 +45,52 @@ app.post("/create-payment", async (req, res) => {
   }
 });
 app.post("/webhook", async (req, res) => {
-  const data = req.body;
-  console.log("Webhook received:", data);
+  const signature = req.headers["x-nowpayments-sig"];
+  const rawBody = JSON.stringify(req.body);
 
-  // Проверка успешного платежа
+  const calculatedSignature = crypto
+    .createHmac("sha512", process.env.NOWPAYMENTS_IPN_SECRET)
+    .update(rawBody)
+    .digest("hex");
+
+  if (signature !== calculatedSignature) {
+    console.warn("⚠️ Неверная подпись IPN");
+    return res.status(401).send("Invalid signature");
+  }
+
+  const data = req.body;
+  console.log("✅ Вебхук получен и верифицирован:", data);
+
   if (data.payment_status === "finished") {
     const { order_id } = data;
+    const parts = order_id.split("|");
 
-    // Пример парсинга order_id — адаптируй под свою систему
-    const [, timestamp, service, link, quantity] = order_id.split("|");
+    if (parts.length === 4) {
+      const [, timestamp, service, link, quantity] = parts;
 
-    try {
-      const response = await axios.post(
-        "https://peakerr.com/api/v2",
-        new URLSearchParams({
-          key: process.env.PEAKERR_API_KEY,
-          action: "add",
-          service: service,
-          link: link,
-          quantity: quantity
-        }),
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
+      try {
+        const response = await axios.post(
+          "https://peakerr.com/api/v2",
+          new URLSearchParams({
+            key: process.env.PEAKERR_API_KEY,
+            action: "add",
+            service,
+            link,
+            quantity
+          }),
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded"
+            }
           }
-        }
-      );
+        );
 
-      console.log("Peakerr response:", response.data);
-    } catch (error) {
-      console.error("Ошибка при отправке заказа на Peakerr:", error.response?.data || error.message);
+        console.log("🟢 Заказ отправлен на Peakerr:", response.data);
+      } catch (error) {
+        console.error("🔴 Ошибка при отправке заказа:", error.response?.data || error.message);
+      }
+    } else {
+      console.warn("⚠️ Некорректный формат order_id:", order_id);
     }
   }
 
