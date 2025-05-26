@@ -65,35 +65,33 @@ app.post("/webhook", async (req, res) => {
     const { order_id } = data;
     const parts = order_id.split("|");
 
-    if (parts.length === 4) {
-      const [, timestamp, service, link, quantity] = parts;
+   if (parts.length === 5) {
+  const [, timestamp, service, link, quantity] = parts;
 
-      try {
-        const response = await axios.post(
-          "https://peakerr.com/api/v2",
-          new URLSearchParams({
-            key: process.env.PEAKERR_API_KEY,
-            action: "add",
-            service,
-            link,
-            quantity
-          }),
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded"
-            }
-          }
-        );
-
-        console.log("🟢 Заказ отправлен на Peakerr:", response.data);
-      } catch (error) {
-        console.error("🔴 Ошибка при отправке заказа:", error.response?.data || error.message);
+  try {
+    const response = await axios.post(
+      "https://peakerr.com/api/v2",
+      new URLSearchParams({
+        key: process.env.PEAKERR_API_KEY,
+        action: "add",
+        service,
+        link,
+        quantity
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
       }
-    } else {
-      console.warn("⚠️ Некорректный формат order_id:", order_id);
-    }
-  }
+    );
 
+    console.log("🟢 Заказ отправлен на Peakerr:", response.data);
+  } catch (error) {
+    console.error("🔴 Ошибка при отправке заказа:", error.response?.data || error.message);
+  }
+} else {
+  console.warn("⚠️ Некорректный формат order_id:", order_id);
+}
   res.status(200).send("OK");
 });
 // Получить список продуктов с Peakerr
